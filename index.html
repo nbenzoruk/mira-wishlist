@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вишлист для Миры</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎂</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes toastIn {
+      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+    .wishlist-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .wishlist-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    }
+    .reserve-btn {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .reserve-btn:hover {
+      transform: scale(1.03);
+      filter: brightness(1.05);
+    }
+    .reserve-btn:active {
+      transform: scale(0.98);
+    }
+    .link-btn {
+      transition: all 0.2s ease;
+    }
+    .link-btn:hover {
+      background: rgba(0,0,0,0.04);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect } = React;
+
+const WISHLIST_ITEMS = [
+  {
+    id: 1,
+    title: "Матрас для кроватки Happy Baby Mommy Lux 140\u00d770",
+    price: "~8 000 \u20bd",
+    link: "https://happybaby.ru/catalog/detskaya-komnata/matras_dlya_krovatki_mommy_lux_140kh70sm/offer/56158/",
+    store: "Happy Baby",
+    emoji: "\ud83d\udecf\ufe0f",
+    category: "practical",
+  },
+  {
+    id: 2,
+    title: "\u041f\u043e\u0434\u0430\u0440\u043e\u043a \u0441 Ozon",
+    price: "",
+    link: "https://ozon.ru/t/zq8Z5ye",
+    store: "Ozon",
+    emoji: "\ud83c\udf81",
+    category: "surprise",
+    note: "\u041e\u0442\u043a\u0440\u043e\u0439 \u0441\u0441\u044b\u043b\u043a\u0443, \u0447\u0442\u043e\u0431\u044b \u0443\u0432\u0438\u0434\u0435\u0442\u044c \u0442\u043e\u0432\u0430\u0440",
+  },
+  {
+    id: 3,
+    title: "\u041e\u0440\u0433\u0430\u043d\u0430\u0439\u0437\u0435\u0440 \u0434\u043b\u044f \u0440\u0435\u0437\u0438\u043d\u043e\u043a, \u0437\u0430\u043a\u043e\u043b\u043e\u043a \u0438 \u0443\u043a\u0440\u0430\u0448\u0435\u043d\u0438\u0439 (aomka)",
+    price: "",
+    link: "https://www.wildberries.ru/catalog/139128212/detail.aspx?size=236268547",
+    store: "Wildberries",
+    emoji: "\ud83c\udf80",
+    category: "accessories",
+  },
+  {
+    id: 4,
+    title: "\u041f\u0435\u043d\u0430 \u0434\u043b\u044f \u0432\u0430\u043d\u043d\u044b \u0438 \u043c\u0430\u043b\u0435\u043d\u044c\u043a\u0438\u0435 \u0431\u043e\u043c\u0431\u043e\u0447\u043a\u0438",
+    price: "",
+    link: null,
+    store: "\u041b\u044e\u0431\u043e\u0439 \u043c\u0430\u0433\u0430\u0437\u0438\u043d",
+    emoji: "\ud83d\udec1",
+    category: "fun",
+    note: "\u0414\u0435\u0442\u0441\u043a\u0430\u044f \u043f\u0435\u043d\u0430 \u0434\u043b\u044f \u0432\u0430\u043d\u043d\u044b + \u043d\u0430\u0431\u043e\u0440 \u043c\u0430\u043b\u0435\u043d\u044c\u043a\u0438\u0445 \u0431\u043e\u043c\u0431\u043e\u0447\u0435\u043a",
+  },
+  {
+    id: 5,
+    title: "\u041c\u043e\u0440\u0441\u043a\u0430\u044f \u043a\u0430\u043f\u0443\u0441\u0442\u0430 \u0445\u0440\u0443\u0441\u0442\u044f\u0449\u0430\u044f, \u043b\u0438\u0441\u0442\u044b \u043d\u043e\u0440\u0438",
+    price: "~100 \u20bd",
+    link: "https://vkusvill.ru/goods/xmlid/78715",
+    store: "\u0412\u043a\u0443\u0441\u0412\u0438\u043b\u043b",
+    emoji: "\ud83e\udd6c",
+    category: "yummy",
+    note: "\u0414\u0430, \u041c\u0438\u0440\u0430 \u043e\u0431\u043e\u0436\u0430\u0435\u0442 \u0445\u0440\u0443\u0441\u0442\u044f\u0449\u0438\u0435 \u043d\u043e\u0440\u0438! \ud83d\ude04",
+  },
+  {
+    id: 6,
+    title: "\u0418\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0439 \u0442\u0440\u0435\u043a \u00ab\u041a\u043e\u0441\u043c\u043e\u0441\u00bb, 5 \u043c\u0430\u0448\u0438\u043d",
+    price: "1 795 \u20bd",
+    link: "https://market.yandex.ru/cc/8gZLNP",
+    store: "\u042f\u043d\u0434\u0435\u043a\u0441 \u041c\u0430\u0440\u043a\u0435\u0442",
+    emoji: "\ud83d\ude80",
+    category: "toys",
+    note: "\u0415\u0441\u0442\u044c \u0438 \u0434\u0440\u0443\u0433\u0438\u0435 \u0440\u0430\u0441\u0446\u0432\u0435\u0442\u043a\u0438 \u043d\u0430 \u041c\u0430\u0440\u043a\u0435\u0442\u0435",
+  },
+  {
+    id: 7,
+    title: "\u041d\u0430\u0431\u043e\u0440 \u0434\u043b\u044f \u0440\u0438\u0441\u043e\u0432\u0430\u043d\u0438\u044f \u0438 \u0442\u0432\u043e\u0440\u0447\u0435\u0441\u0442\u0432\u0430, 208 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u043e\u0432, \u0440\u043e\u0437\u043e\u0432\u044b\u0439, \u0441 \u043c\u043e\u043b\u044c\u0431\u0435\u0440\u0442\u043e\u043c",
+    price: "1 594 \u20bd",
+    link: "https://market.yandex.ru/cc/8gZNNN",
+    store: "\u042f\u043d\u0434\u0435\u043a\u0441 \u041c\u0430\u0440\u043a\u0435\u0442",
+    emoji: "\ud83c\udfa8",
+    category: "creative",
+  },
+  {
+    id: 8,
+    title: "\u041b\u044e\u0431\u0438\u043c\u044b\u0435 \u043c\u0443\u043b\u044c\u0442\u0438\u043a\u0438 (\u0434\u0438\u0441\u043a\u0438 / \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438 / \u043c\u0435\u0440\u0447)",
+    price: "",
+    link: null,
+    store: "",
+    emoji: "\ud83d\udcfa",
+    category: "fun",
+    note: "\u041a\u043e\u0448\u0435\u0447\u043a\u0438-\u0421\u043e\u0431\u0430\u0447\u043a\u0438, \u041c\u0430\u043b\u044b\u0448\u0430\u0440\u0438\u043a\u0438, \u0421\u043e\u0432\u0451\u043d\u043e\u043a \u0425\u043e\u043f-\u0425\u043e\u043f",
+  },
+  {
+    id: 9,
+    title: "\ud83c\udf81 \u041e\u0442 \u043c\u0430\u043c\u044b: \u0411\u0430\u0440\u0430\u0431\u0430\u043d\u043d\u0430\u044f \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0441 \u043f\u043e\u0434\u0441\u0432\u0435\u0442\u043a\u043e\u0439, \u0440\u043e\u0437\u043e\u0432\u0430\u044f",
+    price: "5 850 \u20bd",
+    link: "https://market.yandex.ru/cc/8hCyTG",
+    store: "\u042f\u043d\u0434\u0435\u043a\u0441 \u041c\u0430\u0440\u043a\u0435\u0442",
+    emoji: "\ud83e\udd41",
+    category: "from_mom",
+    reserved: true,
+    reservedBy: "\u041c\u0430\u043c\u0430 \ud83d\udc95",
+  },
+  {
+    id: 10,
+    title: "\u041d\u0430\u0431\u043e\u0440 \u0434\u043b\u044f \u0440\u0438\u0441\u043e\u0432\u0430\u043d\u0438\u044f \u0410\u0432\u0435\u043b\u044c \u00ab\u0413\u0435\u0440\u043e\u0438 \u043a\u0438\u043d\u043e, \u043c\u0443\u043b\u044c\u0442\u0444\u0438\u043b\u044c\u043c\u043e\u0432 \u0438 \u0438\u0433\u0440\u00bb, 208 \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432",
+    price: "1 586 \u20bd",
+    link: "https://market.yandex.ru/cc/8iFZMB",
+    store: "\u042f\u043d\u0434\u0435\u043a\u0441 \u041c\u0430\u0440\u043a\u0435\u0442",
+    emoji: "\u270f\ufe0f",
+    category: "creative",
+  },
+];
+
+const STORAGE_KEY = "mira-wishlist-reservations";
+
+const CATEGORY_COLORS = {
+  practical: { bg: "#FFF7ED", border: "#FB923C", tag: "\u041f\u043e\u043b\u0435\u0437\u043d\u043e\u0435" },
+  surprise: { bg: "#FFF1F2", border: "#FB7185", tag: "\u0421\u044e\u0440\u043f\u0440\u0438\u0437" },
+  accessories: { bg: "#FDF2F8", border: "#EC4899", tag: "\u0410\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b" },
+  fun: { bg: "#F0FDF4", border: "#4ADE80", tag: "\u0412\u0435\u0441\u0435\u043b\u044c\u0435" },
+  yummy: { bg: "#ECFDF5", border: "#34D399", tag: "\u0412\u043a\u0443\u0441\u043d\u044f\u0448\u043a\u0438" },
+  toys: { bg: "#EFF6FF", border: "#60A5FA", tag: "\u0418\u0433\u0440\u0443\u0448\u043a\u0438" },
+  creative: { bg: "#F5F3FF", border: "#A78BFA", tag: "\u0422\u0432\u043e\u0440\u0447\u0435\u0441\u0442\u0432\u043e" },
+  from_mom: { bg: "#FFF1F2", border: "#F43F5E", tag: "\u041e\u0442 \u043c\u0430\u043c\u044b" },
+};
+
+function StarDecor({ style }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: 6,
+        height: 6,
+        borderRadius: "50%",
+        background: "rgba(251, 191, 36, 0.5)",
+        animation: "twinkle 3s ease-in-out infinite",
+        ...style,
+      }}
+    />
+  );
+}
+
+function MiraWishlist() {
+  const [reservations, setReservations] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+  const [guestName, setGuestName] = useState("");
+  const [confirmCancel, setConfirmCancel] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    loadReservations();
+  }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  function loadReservations() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setReservations(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.log("No reservations yet");
+    }
+    setLoading(false);
+  }
+
+  function saveReservation(itemId, name) {
+    const updated = { ...reservations, [itemId]: name };
+    setReservations(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      setToast("\u2705 \u041f\u043e\u0434\u0430\u0440\u043e\u043a \u0437\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d!");
+    } catch (e) {
+      setToast("\u26a0\ufe0f \u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u044f");
+    }
+  }
+
+  function cancelReservation(itemId) {
+    const updated = { ...reservations };
+    delete updated[itemId];
+    setReservations(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      setToast("\u0411\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u043e\u0442\u043c\u0435\u043d\u0435\u043d\u043e");
+    } catch (e) {
+      setToast("\u26a0\ufe0f \u041e\u0448\u0438\u0431\u043a\u0430");
+    }
+  }
+
+  function handleReserve(item) {
+    setModal(item);
+    setGuestName("");
+  }
+
+  function handleConfirmReserve() {
+    if (!guestName.trim()) return;
+    saveReservation(modal.id, guestName.trim());
+    setModal(null);
+  }
+
+  function isReserved(item) {
+    return item.reserved || reservations[item.id];
+  }
+
+  function getReservedBy(item) {
+    return item.reservedBy || reservations[item.id];
+  }
+
+  const availableCount = WISHLIST_ITEMS.filter((i) => !isReserved(i)).length;
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#FFFBF5",
+          fontFamily: "'Georgia', serif",
+        }}
+      >
+        <div style={{ fontSize: 32, animation: "pulse 1.5s ease-in-out infinite" }}>
+          \ud83c\udf82 \u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u0432\u0438\u0448\u043b\u0438\u0441\u0442...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #FFFBF5 0%, #FFF5EB 30%, #FFEEF8 70%, #FFF5EB 100%)",
+        fontFamily: "'Georgia', 'Times New Roman', serif",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <StarDecor style={{ top: "5%", left: "10%", animationDelay: "0s" }} />
+      <StarDecor style={{ top: "12%", right: "15%", animationDelay: "1s" }} />
+      <StarDecor style={{ top: "8%", left: "45%", animationDelay: "2s" }} />
+      <StarDecor style={{ top: "20%", right: "30%", animationDelay: "0.5s" }} />
+      <StarDecor style={{ top: "15%", left: "25%", animationDelay: "1.5s" }} />
+
+      {/* Header */}
+      <div style={{ textAlign: "center", padding: "48px 20px 20px", position: "relative" }}>
+        <div style={{ fontSize: 56, animation: "float 4s ease-in-out infinite", marginBottom: 8 }}>
+          \ud83c\udf82
+        </div>
+        <h1
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: "clamp(28px, 6vw, 44px)",
+            fontWeight: 700,
+            color: "#1a1a1a",
+            margin: "0 0 8px",
+            letterSpacing: "-0.5px",
+            lineHeight: 1.1,
+          }}
+        >
+          \u0412\u0438\u0448\u043b\u0438\u0441\u0442 \u0434\u043b\u044f \u041c\u0438\u0440\u044b
+        </h1>
+        <p
+          style={{
+            fontFamily: "'Nunito', sans-serif",
+            fontSize: "clamp(14px, 3vw, 17px)",
+            color: "#888",
+            margin: "0 0 4px",
+            fontWeight: 400,
+          }}
+        >
+          \u0414\u0435\u043d\u044c \u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f
+        </p>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            marginTop: 16,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Nunito', sans-serif",
+              fontSize: 13,
+              color: "#aaa",
+              background: "rgba(0,0,0,0.03)",
+              padding: "6px 14px",
+              borderRadius: 20,
+            }}
+          >
+            \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0434\u043b\u044f \u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f: <strong style={{ color: "#F97316" }}>{availableCount}</strong> \u0438\u0437{" "}
+            {WISHLIST_ITEMS.length}
+          </div>
+        </div>
+      </div>
+
+      {/* Info banner */}
+      <div
+        style={{
+          maxWidth: 560,
+          margin: "12px auto 28px",
+          padding: "14px 20px",
+          background: "rgba(251, 191, 36, 0.08)",
+          border: "1px solid rgba(251, 191, 36, 0.2)",
+          borderRadius: 14,
+          textAlign: "center",
+          fontFamily: "'Nunito', sans-serif",
+          fontSize: 14,
+          color: "#92400E",
+          lineHeight: 1.5,
+        }}
+      >
+        \u041d\u0430\u0436\u043c\u0438\u0442\u0435 <strong>\u00ab\u0417\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c\u00bb</strong>, \u0447\u0442\u043e\u0431\u044b \u0434\u0440\u0443\u0433\u0438\u0435 \u0433\u043e\u0441\u0442\u0438 \u0432\u0438\u0434\u0435\u043b\u0438, \u0447\u0442\u043e \u043f\u043e\u0434\u0430\u0440\u043e\u043a \u0443\u0436\u0435 \u0432\u044b\u0431\u0440\u0430\u043d. \u041c\u0438\u0440\u0430 \u043d\u0435 \u0443\u0432\u0438\u0434\u0438\u0442, \u043a\u0442\u043e \u0447\u0442\u043e \u0434\u0430\u0440\u0438\u0442 \ud83e\udd2b
+      </div>
+
+      {/* Cards */}
+      <div
+        style={{
+          maxWidth: 600,
+          margin: "0 auto",
+          padding: "0 16px 60px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
+        {WISHLIST_ITEMS.map((item, idx) => {
+          const reserved = isReserved(item);
+          const cat = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.fun;
+
+          return (
+            <div
+              key={item.id}
+              className="wishlist-card"
+              style={{
+                background: reserved ? "#FAFAFA" : "#fff",
+                borderRadius: 16,
+                padding: "18px 20px",
+                border: "1.5px solid " + (reserved ? "#E5E5E5" : cat.border + "40"),
+                position: "relative",
+                opacity: reserved ? 0.75 : 1,
+                animation: "fadeInUp 0.5s ease " + (idx * 0.06) + "s both",
+              }}
+            >
+              {/* Category tag */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: -9,
+                  right: 16,
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: cat.border,
+                  background: cat.bg,
+                  border: "1px solid " + cat.border + "30",
+                  padding: "2px 10px",
+                  borderRadius: 8,
+                }}
+              >
+                {cat.tag}
+              </div>
+
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                {/* Emoji */}
+                <div
+                  style={{
+                    fontSize: 32,
+                    lineHeight: 1,
+                    flexShrink: 0,
+                    marginTop: 2,
+                    filter: reserved ? "grayscale(0.5)" : "none",
+                  }}
+                >
+                  {item.emoji}
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: "'Nunito', sans-serif",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: reserved ? "#999" : "#1a1a1a",
+                      lineHeight: 1.35,
+                      textDecoration: reserved ? "line-through" : "none",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {item.title}
+                  </div>
+
+                  {item.note && (
+                    <div
+                      style={{
+                        fontFamily: "'Nunito', sans-serif",
+                        fontSize: 12,
+                        color: "#999",
+                        fontStyle: "italic",
+                        marginBottom: 4,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {item.note}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      flexWrap: "wrap",
+                      marginTop: 6,
+                    }}
+                  >
+                    {item.price && (
+                      <span
+                        style={{
+                          fontFamily: "'Nunito', sans-serif",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: reserved ? "#bbb" : "#F97316",
+                        }}
+                      >
+                        {item.price}
+                      </span>
+                    )}
+
+                    {item.store && (
+                      <span
+                        style={{
+                          fontFamily: "'Nunito', sans-serif",
+                          fontSize: 11,
+                          color: "#bbb",
+                          background: "#f5f5f5",
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                        }}
+                      >
+                        {item.store}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginTop: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {item.link && (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="link-btn"
+                        style={{
+                          fontFamily: "'Nunito', sans-serif",
+                          fontSize: 12,
+                          color: "#60A5FA",
+                          textDecoration: "none",
+                          padding: "5px 12px",
+                          borderRadius: 8,
+                          border: "1px solid rgba(96,165,250,0.2)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        \ud83d\udd17 \u041e\u0442\u043a\u0440\u044b\u0442\u044c
+                      </a>
+                    )}
+
+                    {reserved ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span
+                          style={{
+                            fontFamily: "'Nunito', sans-serif",
+                            fontSize: 12,
+                            color: "#10B981",
+                            background: "#ECFDF5",
+                            padding: "5px 12px",
+                            borderRadius: 8,
+                            border: "1px solid rgba(16,185,129,0.2)",
+                          }}
+                        >
+                          \u2705 \u0417\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043b(\u0430): {getReservedBy(item)}
+                        </span>
+                        {!item.reserved && (
+                          <button
+                            onClick={() => setConfirmCancel(item.id)}
+                            style={{
+                              fontFamily: "'Nunito', sans-serif",
+                              fontSize: 11,
+                              color: "#ccc",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "4px 6px",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            \u043e\u0442\u043c\u0435\u043d\u0430
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        className="reserve-btn"
+                        onClick={() => handleReserve(item)}
+                        style={{
+                          fontFamily: "'Nunito', sans-serif",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#fff",
+                          background: "linear-gradient(135deg, " + cat.border + ", " + cat.border + "CC)",
+                          border: "none",
+                          padding: "6px 16px",
+                          borderRadius: 10,
+                        }}
+                      >
+                        \u0417\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          textAlign: "center",
+          padding: "20px 20px 40px",
+          fontFamily: "'Nunito', sans-serif",
+          fontSize: 13,
+          color: "#ccc",
+        }}
+      >
+        \u0421\u0434\u0435\u043b\u0430\u043d\u043e \u0441 \ud83d\udc95 \u0434\u043b\u044f \u041c\u0438\u0440\u044b
+      </div>
+
+      {/* Reserve modal */}
+      {modal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20,
+          }}
+          onClick={() => setModal(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 20,
+              padding: "28px 24px",
+              maxWidth: 380,
+              width: "100%",
+              animation: "slideIn 0.2s ease",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.15)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>{modal.emoji}</div>
+              <div
+                style={{
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#1a1a1a",
+                  lineHeight: 1.3,
+                }}
+              >
+                {modal.title}
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: 13,
+                color: "#888",
+                textAlign: "center",
+                marginBottom: 16,
+              }}
+            >
+              \u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0432\u0430\u0448\u0435 \u0438\u043c\u044f, \u0447\u0442\u043e\u0431\u044b \u0434\u0440\u0443\u0433\u0438\u0435 \u0433\u043e\u0441\u0442\u0438 \u0437\u043d\u0430\u043b\u0438, \u0447\u0442\u043e \u043f\u043e\u0434\u0430\u0440\u043e\u043a \u0437\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d
+            </div>
+
+            <input
+              type="text"
+              placeholder="\u0412\u0430\u0448\u0435 \u0438\u043c\u044f"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleConfirmReserve()}
+              autoFocus
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: 15,
+                padding: "12px 16px",
+                borderRadius: 12,
+                border: "2px solid #F3F3F3",
+                outline: "none",
+                textAlign: "center",
+                marginBottom: 14,
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#F97316")}
+              onBlur={(e) => (e.target.style.borderColor = "#F3F3F3")}
+            />
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setModal(null)}
+                style={{
+                  flex: 1,
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: "11px",
+                  borderRadius: 12,
+                  border: "1.5px solid #E5E5E5",
+                  background: "#fff",
+                  color: "#999",
+                  cursor: "pointer",
+                }}
+              >
+                \u041e\u0442\u043c\u0435\u043d\u0430
+              </button>
+              <button
+                onClick={handleConfirmReserve}
+                className="reserve-btn"
+                style={{
+                  flex: 1.5,
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  padding: "11px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "linear-gradient(135deg, #F97316, #FB923C)",
+                  color: "#fff",
+                  opacity: guestName.trim() ? 1 : 0.4,
+                }}
+              >
+                \ud83c\udf81 \u0417\u0430\u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel confirmation */}
+      {confirmCancel && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20,
+          }}
+          onClick={() => setConfirmCancel(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 20,
+              padding: "28px 24px",
+              maxWidth: 340,
+              width: "100%",
+              animation: "slideIn 0.2s ease",
+              textAlign: "center",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.15)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "#1a1a1a",
+                marginBottom: 16,
+              }}
+            >
+              \u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435?
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setConfirmCancel(null)}
+                style={{
+                  flex: 1,
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 14,
+                  padding: "10px",
+                  borderRadius: 12,
+                  border: "1.5px solid #E5E5E5",
+                  background: "#fff",
+                  color: "#999",
+                  cursor: "pointer",
+                }}
+              >
+                \u041d\u0435\u0442
+              </button>
+              <button
+                onClick={() => {
+                  cancelReservation(confirmCancel);
+                  setConfirmCancel(null);
+                }}
+                style={{
+                  flex: 1,
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: "10px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "#EF4444",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                \u0414\u0430, \u043e\u0442\u043c\u0435\u043d\u0438\u0442\u044c
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            fontFamily: "'Nunito', sans-serif",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#fff",
+            background: "rgba(0,0,0,0.8)",
+            backdropFilter: "blur(8px)",
+            padding: "10px 24px",
+            borderRadius: 14,
+            zIndex: 2000,
+            animation: "toastIn 0.3s ease",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<MiraWishlist />);
+  </script>
+</body>
+</html>
