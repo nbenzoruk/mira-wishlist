@@ -156,8 +156,7 @@ const html = `<!DOCTYPE html>
 <body>
   <div id="root"></div>
   <script>
-    // Set API URL here after deploying the Cloudflare Worker:
-    // window.__WISHLIST_API__ = "https://mira-wishlist.YOUR_SUBDOMAIN.workers.dev/api/reservations";
+    window.__WISHLIST_API__ = "https://mira-wishlist.nbenzoruk.workers.dev/api/reservations";
   </script>
   <script type="text/babel">
 ${jsx}
